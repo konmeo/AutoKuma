@@ -1345,14 +1345,16 @@ impl Worker {
         debug!("Connection opened!");
         *self.socket_io.lock().await = client;
 
-        for i in 0..10 {
+        let iters = self.config.connect_timeout.max(0.0).ceil() as usize;
+
+        for _ in 0..iters {
             if self.is_ready().await {
                 debug!("Connected!");
                 return Ok(());
             }
 
             debug!("Waiting for Kuma to get ready...");
-            tokio::time::sleep(Duration::from_millis(200 * i)).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
 
         warn!("Timeout while waiting for Kuma to get ready...");
